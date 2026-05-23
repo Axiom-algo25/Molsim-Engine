@@ -1,67 +1,96 @@
 #include "raylib.h"
+#include "integrator.h"
 #include "atom.h"
 #include "forcefield.h"
+#include <vector>
 #include <iostream>
 
 int main() {
-    Atom carbon;
-    carbon.type = "C";
-    carbon.position = Vec3(0.0, 0.0, 0.0);
-    carbon.epsilon = 0.1094;
-    carbon.sigma = 3.40;
-    carbon.charge = 0.0;
+    std::vector<Atom> atoms;
 
-    Atom oxygen;
-    oxygen.type = "O";
-    oxygen.position = Vec3(4.0, 0.0, 0.0);
-    oxygen.epsilon = 0.2092;
-    oxygen.sigma = 2.96;
-    oxygen.charge = -0.55;
+    for(int i = 0 ; i < 5; i++){
+        Atom a ;
+        a.type = "C";
+        a.position = Vec3(i * 3.3 , 0 , 0 );
+        a.velocity = Vec3( 0 , 0 , 0);
+        a.mass = 12.0;
+        a.epsilon = 0.1094;
+        a.sigma = 3.40;
+        a.charge = 0.55;
+        atoms.push_back(a);
+    }
 
-    double energy = total_pair_energy(carbon, oxygen);
-    std::cout << "Distance: " << (carbon.position - oxygen.position).length() << " A" << std::endl;
-    std::cout << "LJ Energy: " << lennard_jones_potential(carbon, oxygen) << " kcal/mol" << std::endl;
-    std::cout << "Coulomb Energy: " << coulomb_potential(carbon, oxygen) << " kcal/mol" << std::endl;
-    std::cout << "Total Energy: " << energy << " kcal/mol" << std::endl;
+    for(int i = 0 ; i < 5 ; i++){
+        Atom a; 
+        a.type = "O";
+        a.position = Vec3(i * 3.3, 5.0, 0.0);
+        a.velocity = Vec3(0.0, 0.0, 0.0);
+        a.mass = 16.0;
+        a.epsilon = 0.2092;
+        a.sigma = 2.96;
+        a.charge = -0.55;
+        atoms.push_back(a);
+    }
 
-    const int screenWidth = 1000;
-    const int screenHeight = 700;
-    InitWindow(screenWidth, screenHeight, "MolSim Engine v0.1");
+    
+    srand(time(nullptr));
+    for(auto& atom : atoms) {
+        atom.velocity.x = (rand() / (double)RAND_MAX - 0.5) * 0.01;
+        atom.velocity.y = (rand() / (double)RAND_MAX - 0.5) * 0.01;
+        atom.velocity.z = (rand() / (double)RAND_MAX - 0.5) * 0.01;
+    }
+
+    std::cout << "Created " << atoms.size() << " atoms\n";
+    for(int i = 0; i < atoms.size(); i++){
+        std::cout << "Atom " << i << " (" << atoms[i].type << "): x=" << atoms[i].position.x 
+                  << " y=" << atoms[i].position.y << " charge=" << atoms[i].charge << "\n";
+    }
+
+   
+
+    const int screenwidth = 1000;
+    const int screenheight = 700;
+    InitWindow(screenwidth,screenheight, "Molsim Engine  v0.3 - 10 Atoms");
 
     Camera3D camera = {0};
-    camera.position = Vector3{10.0f, 6.0f, 10.0f};
-    camera.target = Vector3{2.0f, 0.0f, 0.0f};
+    camera.position = Vector3{3.0f, 1.0f, 15.0f};
+    camera.target = Vector3{6.0f, 2.5f, 0.0f};
     camera.up = Vector3{0.0f, 1.0f, 0.0f};
-    camera.fovy = 45.0f;
+    camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
     SetTargetFPS(60);
+    double dt = 0.001;
 
-    while (!WindowShouldClose()) {
-        UpdateCamera(&camera, CAMERA_ORBITAL);
+    while(!WindowShouldClose()){
+        for(int step = 0 ; step <100 ; step++){
+            velocity_verlet_step(atoms , dt);
+        }
+
+        UpdateCamera(&camera , CAMERA_ORBITAL);
         BeginDrawing();
         ClearBackground(BLACK);
         BeginMode3D(camera);
 
-        DrawGrid(20, 1.0f);
-        DrawLine3D(Vector3{-10,0,0}, Vector3{10,0,0}, RED);
-        DrawLine3D(Vector3{0,-10,0}, Vector3{0,10,0}, GREEN);
-        DrawLine3D(Vector3{0,0,-10}, Vector3{0,0,10}, BLUE);
+        DrawGrid(20 , 1.0f);
 
-        DrawSphere(Vector3{0,0,0}, 0.6f, DARKGRAY);
-        DrawSphere(Vector3{4,0,0}, 0.5f, RED);
-        DrawLine3D(Vector3{0,0,0}, Vector3{4,0,0}, WHITE);
-
+        for(const auto& atom: atoms){
+            Color atomColor;
+            float radius;
+            if(atom.type == "C"){
+                atomColor = DARKGRAY;
+                radius = 0.5f;
+            }else{
+                atomColor = RED;
+                radius = 0.4f;
+            }
+            DrawSphere(Vector3{(float)atom.position.x , (float)atom.position.y , (float)atom.position.z } , radius , atomColor);
+        }
         EndMode3D();
 
-        DrawText("MolSim Engine v0.1", 10, 10, 24, WHITE);
-        DrawText("Carbon (C) - Dark Gray", 10, 40, 18, LIGHTGRAY);
-        DrawText("Oxygen (O) - Red", 10, 60, 18, LIGHTGRAY);
-        DrawText(TextFormat("Distance: %.2f A", 4.0), 10, 90, 18, YELLOW);
-        DrawText(TextFormat("LJ Energy: %.4f kcal/mol", lennard_jones_potential(carbon, oxygen)), 10, 115, 18, YELLOW);
-        DrawText(TextFormat("Coulomb Energy: %.4f kcal/mol", coulomb_potential(carbon, oxygen)), 10, 135, 18, YELLOW);
-        DrawText(TextFormat("Total Energy: %.4f kcal/mol", energy), 10, 160, 20, GREEN);
-        DrawText("Drag mouse to orbit | Scroll to zoom", 10, screenHeight - 30, 16, GRAY);
+        DrawText("MolSim Engine v0.3 - 10 Atoms", 10, 10, 24, WHITE);
+        DrawText("5 Carbon (gray) + 5 Oxygen (red)", 10, 40, 18, LIGHTGRAY);
+        DrawText("Drag mouse to orbit | Scroll to zoom", 10, screenheight - 30, 16, GRAY);
 
         EndDrawing();
     }

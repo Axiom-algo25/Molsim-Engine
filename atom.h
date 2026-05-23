@@ -6,6 +6,9 @@
 struct Atom {
     std::string type;
     Vec3 position;
+    Vec3 acceleration;
+    Vec3 velocity;
+    double mass;
     double charge;
     double epsilon;
     double sigma;
