@@ -2,6 +2,8 @@
 #define ATOM_H
 #include "vec3.h"
 #include <string>
+#include <iostream>
+#include <vector>
 
 struct Atom {
     std::string type;
@@ -13,5 +15,15 @@ struct Atom {
     double epsilon;
     double sigma;
 };
+
+void create_atom(
+    std::vector<Atom>& atoms,
+    std::string type,
+    Vec3 pos,
+    double mass,
+    double epsilon,
+    double sigma,
+    double charge
+);
 
 #endif

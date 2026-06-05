@@ -8,38 +8,60 @@
 int main() {
     std::vector<Atom> atoms;
 
-    for(int i = 0 ; i < 5; i++){
-        Atom a ;
-        a.type = "C";
-        a.position = Vec3(i * 3.3 , 0 , 0 );
-        a.velocity = Vec3( 0 , 0 , 0);
-        a.mass = 12.0;
-        a.epsilon = 0.1094;
-        a.sigma = 3.40;
-        a.charge = 0.55;
-        atoms.push_back(a);
+
+    for(int x = 0 ; x <  5 ; x++)
+    {
+        for(int y = 0 ; y < 5 ; y++){
+            create_atom(
+                atoms,
+                "C",
+
+                Vec3(
+                    x * 4.0 +(rand()/(double)RAND_MAX - 0.5 )*0.3,
+                    y * 4.0 +(rand()/(double)RAND_MAX - 0.5 )*0.3,
+                    (rand()/(double)RAND_MAX - 0.5 )*0.3
+                ),
+
+            12.0,
+            0.1904,
+            3.40,
+            0.0
+            );
+        }
     }
 
-    for(int i = 0 ; i < 5 ; i++){
-        Atom a; 
-        a.type = "O";
-        a.position = Vec3(i * 3.3, 5.0, 0.0);
-        a.velocity = Vec3(0.0, 0.0, 0.0);
-        a.mass = 16.0;
-        a.epsilon = 0.2092;
-        a.sigma = 2.96;
-        a.charge = -0.55;
-        atoms.push_back(a);
-    }
+    for(int x = 0 ; x < 5 ; x++)
+    {
+        for(int y = 0 ; y < 5 ; y++){
 
-    
+            create_atom(
+
+                atoms,
+                "O",
+
+                Vec3(
+                    x * 4.0 + (rand()/(double)RAND_MAX - 0.5)*0.3,
+                    y * 4.0 + (rand()/(double)RAND_MAX - 0.5)*0.3,
+                    5.0 + (rand()/(double)RAND_MAX - 0.5)*0.3
+                ),
+
+                16.0,
+                0.2092,
+                2.96,
+                0.0
+            );
+        }
+    }
+/*
     srand(time(nullptr));
     for(auto& atom : atoms) {
-        atom.velocity.x = (rand() / (double)RAND_MAX - 0.5) * 0.01;
-        atom.velocity.y = (rand() / (double)RAND_MAX - 0.5) * 0.01;
-        atom.velocity.z = (rand() / (double)RAND_MAX - 0.5) * 0.01;
-    }
+        double v_rms = sqrt(0.831446 * 310.0 / atom.mass);
+        atom.velocity.x = v_rms * (rand() / (double)RAND_MAX - 0.5) * 2.0;
+        atom.velocity.y = v_rms * (rand() / (double)RAND_MAX - 0.5) * 2.0;
+        atom.velocity.z = v_rms * (rand() / (double)RAND_MAX - 0.5) * 2.0;
 
+    }
+*/
     std::cout << "Created " << atoms.size() << " atoms\n";
     for(int i = 0; i < atoms.size(); i++){
         std::cout << "Atom " << i << " (" << atoms[i].type << "): x=" << atoms[i].position.x 
@@ -51,47 +73,97 @@ int main() {
     const int screenwidth = 1000;
     const int screenheight = 700;
     InitWindow(screenwidth,screenheight, "Molsim Engine  v0.3 - 10 Atoms");
-
+    
+    
     Camera3D camera = {0};
-    camera.position = Vector3{3.0f, 1.0f, 15.0f};
-    camera.target = Vector3{6.0f, 2.5f, 0.0f};
+    camera.position = Vector3{10.0f, 15.0f, 25.0f};
+    camera.target = Vector3{0.0f, 0.0f, 0.0f};
     camera.up = Vector3{0.0f, 1.0f, 0.0f};
     camera.fovy = 60.0f;
     camera.projection = CAMERA_PERSPECTIVE;
 
     SetTargetFPS(60);
     double dt = 0.001;
+    double target_temp = 2.0;
+    int step_counter = 0;
+    int visual_scale = 1;
+    
 
     while(!WindowShouldClose()){
-        for(int step = 0 ; step <100 ; step++){
+
+        if (IsKeyPressed(KEY_UP)) target_temp += 10.0;
+        if (IsKeyPressed(KEY_DOWN)) target_temp -= 10.0;
+        if (IsKeyPressed(KEY_T)) target_temp= (target_temp > 311.0) ? 310.0 : 313.0 ; 
+        if(IsKeyPressed(KEY_F)){ToggleFullscreen();}
+
+        step_counter++;
+        if(step_counter % 10 == 0){
+            apply_thermostat(atoms,target_temp);
+            
+        }
+        static int frameCounter = 0;
+        frameCounter++;
+
+        if(frameCounter % 60 == 0){
+        std::cout
+            << "Pos: "
+            << atoms[0].position.x << " "
+            << atoms[0].position.y << " "
+            << atoms[0].position.z
+            << " | Vel: "
+            << atoms[0].velocity.x << " "
+            << atoms[0].velocity.y << " "
+            << atoms[0].velocity.z
+            << std::endl;
+         }
+
+        for(int step = 0 ; step < 10 ; step++){
             velocity_verlet_step(atoms , dt);
         }
 
-        UpdateCamera(&camera , CAMERA_ORBITAL);
+        UpdateCamera(&camera , CAMERA_FREE);
         BeginDrawing();
         ClearBackground(BLACK);
         BeginMode3D(camera);
 
-        DrawGrid(20 , 1.0f);
+        DrawGrid(100 , 5.0f);
+
+        DrawCubeWires(
+            Vector3{0,0,0},
+            40.0f,
+            40.0f,
+            40.0f,
+            GREEN
+                );
 
         for(const auto& atom: atoms){
             Color atomColor;
             float radius;
             if(atom.type == "C"){
                 atomColor = DARKGRAY;
-                radius = 0.5f;
+                radius = 2.5f;
             }else{
                 atomColor = RED;
-                radius = 0.4f;
+                radius = 2.0f;
             }
-            DrawSphere(Vector3{(float)atom.position.x , (float)atom.position.y , (float)atom.position.z } , radius , atomColor);
+
+            DrawSphere(Vector3{
+                (float)(atom.position.x * visual_scale),
+                (float)(atom.position.y * visual_scale), 
+                (float)(atom.position.z * visual_scale)
+            } , 
+            radius, 
+            atomColor);
         }
         EndMode3D();
-
-        DrawText("MolSim Engine v0.3 - 10 Atoms", 10, 10, 24, WHITE);
-        DrawText("5 Carbon (gray) + 5 Oxygen (red)", 10, 40, 18, LIGHTGRAY);
+        
+        DrawText("MolSim Engine v0.3 - 50 Atoms", 10, 10, 24, WHITE);
+        DrawText("25 Carbon (gray) + 25 Oxygen (red)", 10, 40, 18, LIGHTGRAY);
         DrawText("Drag mouse to orbit | Scroll to zoom", 10, screenheight - 30, 16, GRAY);
 
+        double current_t = compute_temperature(atoms);
+        DrawText(TextFormat("Target : %.0f K (%.1f)" , target_temp , target_temp - 273.15 ) , 10 ,70 ,18 , LIGHTGRAY);
+        DrawText(TextFormat("Current %.1f K  " , current_t) , 10 ,90 , 18 , LIGHTGRAY);
         EndDrawing();
     }
     CloseWindow();
