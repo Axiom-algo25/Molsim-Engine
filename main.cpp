@@ -4,11 +4,13 @@
 #include "forcefield.h"
 #include <vector>
 #include <iostream>
-
+#include "pdb_parser.h"
 int main() {
     std::vector<Atom> atoms;
 
-
+    std::cout << "PDB PARSER VERSION 999\n";
+    atoms = load_pdb("1CRN.pdb");
+/*
     for(int x = 0 ; x <  5 ; x++)
     {
         for(int y = 0 ; y < 5 ; y++){
@@ -52,6 +54,7 @@ int main() {
             );
         }
     }
+*/
 /*
     srand(time(nullptr));
     for(auto& atom : atoms) {
@@ -76,7 +79,7 @@ int main() {
     
     
     Camera3D camera = {0};
-    camera.position = Vector3{10.0f, 15.0f, 25.0f};
+    camera.position = Vector3{10.0f, 10.0f, 10.0f};
     camera.target = Vector3{0.0f, 0.0f, 0.0f};
     camera.up = Vector3{0.0f, 1.0f, 0.0f};
     camera.fovy = 60.0f;
@@ -84,7 +87,7 @@ int main() {
 
     SetTargetFPS(60);
     double dt = 0.001;
-    double target_temp = 2.0;
+    double target_temp = 5000ff.0;
     int step_counter = 0;
     int visual_scale = 1;
     
@@ -139,12 +142,26 @@ int main() {
         for(const auto& atom: atoms){
             Color atomColor;
             float radius;
-            if(atom.type == "C"){
+            
+            char first_letter = atom.type[0];
+            if (first_letter == 'C'){
                 atomColor = DARKGRAY;
-                radius = 2.5f;
-            }else{
+                radius = 0.6f;
+            }else if (first_letter == 'N'){
+                atomColor = BLUE;
+                radius = 0.5f;
+            }else if (first_letter == 'O'){
                 atomColor = RED;
-                radius = 2.0f;
+                radius = 0.5f;
+            }else if (first_letter == 'S'){
+                atomColor = YELLOW;
+                radius = 0.7f;
+            }else if (first_letter == 'H'){
+                atomColor = WHITE;
+                radius = 0.3f;
+            }else {
+                atomColor = PINK;
+                radius = 0.5f;
             }
 
             DrawSphere(Vector3{
@@ -157,8 +174,8 @@ int main() {
         }
         EndMode3D();
         
-        DrawText("MolSim Engine v0.3 - 50 Atoms", 10, 10, 24, WHITE);
-        DrawText("25 Carbon (gray) + 25 Oxygen (red)", 10, 40, 18, LIGHTGRAY);
+        DrawText("MolSim Engine v0.4 - 1CRN (Crambin)", 10, 10, 24, WHITE);
+        DrawText(TextFormat("%d atoms | PDB loaded", atoms.size()), 10, 40, 18, LIGHTGRAY);
         DrawText("Drag mouse to orbit | Scroll to zoom", 10, screenheight - 30, 16, GRAY);
 
         double current_t = compute_temperature(atoms);

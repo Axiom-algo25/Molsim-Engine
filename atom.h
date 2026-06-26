@@ -5,6 +5,10 @@
 #include <iostream>
 #include <vector>
 
+
+
+
+
 struct Atom {
     std::string type;
     Vec3 position;
@@ -15,6 +19,8 @@ struct Atom {
     double epsilon;
     double sigma;
 };
+
+
 
 void create_atom(
     std::vector<Atom>& atoms,
@@ -27,3 +33,4 @@ void create_atom(
 );
 
 #endif
+

@@ -138,6 +138,7 @@ void apply_thermostat(std::vector<Atom>& atoms , double target_temp){
         a.velocity.y *= scale;
         a.velocity.z *= scale;
     }
+    /*
     std::cout
             << "Current T = " << current
             << " Target = " << target_temp
@@ -148,5 +149,7 @@ void apply_thermostat(std::vector<Atom>& atoms , double target_temp){
             << atoms[0].velocity.x << " "
             << atoms[0].velocity.y << " "
             << atoms[0].velocity.z
-        << std::endl;        
+        << std::endl; 
+    */           
 }
+    
