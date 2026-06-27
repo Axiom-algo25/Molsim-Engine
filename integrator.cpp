@@ -41,7 +41,18 @@ void velocity_verlet_step(std::vector<Atom>& atoms , double dt){
         atoms[i].velocity.z += 0.5 * atoms[i].acceleration.z * dt;
     }
 
-    
+    for (int i = 0; i < n; i++) {
+        double v_max = 200.0;
+        double speed = sqrt(atoms[i].velocity.x * atoms[i].velocity.x +
+                            atoms[i].velocity.y * atoms[i].velocity.y +
+                            atoms[i].velocity.z * atoms[i].velocity.z);
+        if (speed > v_max) {
+            double scale = v_max / speed;
+            atoms[i].velocity.x *= scale;
+            atoms[i].velocity.y *= scale;
+            atoms[i].velocity.z *= scale;
+        }
+    }
     for (int i = 0; i < n; i++) {
 
         atoms[i].position.x += atoms[i].velocity.x * dt;

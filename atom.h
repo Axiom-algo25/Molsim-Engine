@@ -32,5 +32,10 @@ void create_atom(
     double charge
 );
 
+struct Bond{
+    int atom1;
+    int atom2;
+};
+
 #endif
 

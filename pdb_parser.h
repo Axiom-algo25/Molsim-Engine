@@ -6,5 +6,5 @@
 #include "atom.h"
 
 std::vector<Atom> load_pdb(const std::string& filename);
-
+std::vector<Bond> detect_bonds(const std::vector<Atom>& atoms);
 #endif
